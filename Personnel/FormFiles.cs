@@ -1,0 +1,232 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Data.OleDb;
+using System.IO;
+using System.Threading;
+using System.Diagnostics;
+
+namespace Personnel
+{
+    public partial class FormFiles : Form
+    {
+        OleDbConnection con;
+        OleDbCommand cmd;
+        OleDbDataReader rd;
+        string s;
+        int i;
+        /// <summary>
+        /// 
+        /// </summary>
+        string key1 = "56987415";
+        public FormFiles(string s, int i)
+        {
+            InitializeComponent();
+            this.s = s;
+            this.i = i;
+            Load(s);
+            Load2(s);
+        }
+
+        private void Crypt(string inputFilePath, string outputFilePath, bool CoderMode, string dec)
+        {
+            int bufferSize = 1024 * 64; //Создание буфера
+
+            using (FileStream inStream = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read))
+            {
+
+                using (FileStream fileStream = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write))
+                {
+
+                    int bytesRead = -1;
+                    byte[] bytes = new byte[bufferSize];
+                    string decodeString = dec;
+
+
+                    double decodeInt = Convert.ToDouble(decodeString);
+                    double l = Math.Round((decodeInt / 13998), 5);
+                    double k = (l - (int)l) * 1000;
+                    int ln = Convert.ToInt32((k - (int)k) * 100);
+
+                    while ((bytesRead = inStream.Read(bytes, 0, bufferSize)) > 0)
+                    {
+
+                        int[] bytesAsInts = bytes.Select(x => (int)x).ToArray();
+
+                        if (CoderMode == false)
+                        {
+                            for (int i = 0; i < bytesAsInts.Length; i++)
+                            {
+                                bytesAsInts[i] = ((bytesAsInts[i] - (ln * 2) - 128) * -1);
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < bytesAsInts.Length; i++)
+                            {
+                                bytesAsInts[i] = ((bytesAsInts[i] * (-1) + ln * 2) + 128);
+                            }
+                        }
+
+
+                        byte[] bytes1 = bytesAsInts.Select(x => (byte)x).ToArray();
+                        fileStream.Write(bytes1, 0, bytesRead);
+                        fileStream.Flush();
+                    }
+                    //MessageBox.Show("Декодування виконано!", "Повідомлення");
+                    
+                    string extension = Path.GetExtension(outputFilePath);
+                    if (extension != ".crypt")
+                    {
+                        File.SetAttributes(outputFilePath, FileAttributes.Hidden);
+                    }
+                    fileStream.Close();
+                }
+            }
+            string extension1 = Path.GetExtension(inputFilePath);
+            if (extension1 != ".crypt")
+                File.Delete(inputFilePath);
+        }
+
+        private void CryptOpen(string inputFilePath, string outputFilePath, bool CoderMode, string dec)
+        {
+            int bufferSize = 1024 * 64; //Создание буфера
+
+            using (FileStream inStream = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read))
+            {
+
+                using (FileStream fileStream = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write))
+                {
+
+                    int bytesRead = -1;
+                    byte[] bytes = new byte[bufferSize];
+                    string decodeString = dec;
+
+
+                    double decodeInt = Convert.ToDouble(decodeString);
+                    double l = Math.Round((decodeInt / 13998), 5);
+                    double k = (l - (int)l) * 1000;
+                    int ln = Convert.ToInt32((k - (int)k) * 100);
+
+                    while ((bytesRead = inStream.Read(bytes, 0, bufferSize)) > 0)
+                    {
+
+                        int[] bytesAsInts = bytes.Select(x => (int)x).ToArray();
+
+                        if (CoderMode == false)
+                        {
+                            for (int i = 0; i < bytesAsInts.Length; i++)
+                            {
+                                bytesAsInts[i] = ((bytesAsInts[i] - (ln * 2) - 128) * -1);
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < bytesAsInts.Length; i++)
+                            {
+                                bytesAsInts[i] = ((bytesAsInts[i] * (-1) + ln * 2) + 128);
+                            }
+                        }
+
+
+                        byte[] bytes1 = bytesAsInts.Select(x => (byte)x).ToArray();
+                        fileStream.Write(bytes1, 0, bytesRead);
+                        fileStream.Flush();
+                    }
+
+                    string extension = Path.GetExtension(outputFilePath);
+                    if (extension != ".crypt")
+                    {
+                        File.SetAttributes(outputFilePath, FileAttributes.Hidden);
+                        fileStream.Close();
+                        inStream.Close();
+                        Open(outputFilePath);
+                    }
+                    fileStream.Close();
+                    //fileStream.Dispose();
+                }
+                inStream.Close();
+                //inStream.Dispose();
+            }
+        }
+
+        private void Open(string s)
+        {
+            var pr = new Process();
+            pr.StartInfo.FileName = s;
+            pr.StartInfo.UseShellExecute = true;
+            pr.EnableRaisingEvents = true;
+            //цепляем само событие
+            pr.Exited += new EventHandler(after_exited);
+            pr.Start();
+        }
+
+        private void Load (string s)
+        {
+            string[] files = Directory.GetFiles(s);
+
+            for (int j = 0; j < files.Count(); j++)
+            {
+                //string result = Path.GetFileName(files[0]);
+
+                string extension = Path.GetExtension(files[j]);
+                if (extension != ".crypt")
+                {
+                    string pathFile = files[j];
+                    Crypt(pathFile, pathFile.ToString() + ".crypt", false, key1);
+                }
+            }
+        }
+
+        private void Load2(string s)
+        {
+            string[] files = Directory.GetFiles(s);
+
+            List<string[]> dt = new List<string[]>();
+            //MessageBox.Show(files[0].ToString());
+            for (int j = 0; j < files.Count(); j++)
+            {
+
+                dt.Add(new string[3]);
+
+                dt[dt.Count - 1][0] = files[j].ToString();
+                dt[dt.Count - 1][1] = Convert.ToString(File.GetLastWriteTime(files[j]));
+                dt[dt.Count - 1][2] = i.ToString();
+            }
+            foreach (string[] a in dt)
+                dataGridView1.Rows.Add(a);
+            dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        }
+
+        private void after_exited(object sender, EventArgs e)
+        {
+            try
+            {
+                File.Delete(s);
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Помилка!");
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            string pathFile = (dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[0].Value.ToString());
+            string newPathFile = pathFile.Replace(".crypt", "");
+            CryptOpen(pathFile, newPathFile, false, key1);
+
+            //Thread.Sleep(5000);
+            //Del(newPathFile);
+            //FormFiles ff = new FormFiles(s,i);
+            //ff.Show();
+            //this.Hide();
+            //Thread.Sleep(5000);
+        }
+    }
+}
